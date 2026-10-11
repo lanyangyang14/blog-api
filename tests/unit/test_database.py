@@ -1,14 +1,15 @@
 """测试数据库"""
 
-from sqlalchemy import inspect, exc
+from sqlalchemy import inspect
 
 from blog_api.database import engine
 
 
 def test_engine_connects():
-      """引擎连接"""
-      with engine.connect() as conn:
-          assert conn is not None
+    """引擎连接"""
+    with engine.connect() as conn:
+        assert conn is not None
+
 
 def test_user_tables_exist():
     """表存在"""
@@ -16,11 +17,12 @@ def test_user_tables_exist():
     tables = inspector.get_table_names()
     assert "users" in tables
 
+
 def test_users_columns():
     """users表有正确的列"""
     inspector = inspect(engine)
-    columns={col["name"]for col in inspector.get_columns(table_name="users")}
-    expected={
+    columns = {col["name"] for col in inspector.get_columns(table_name="users")}
+    expected = {
         "id",
         "username",
         "email",

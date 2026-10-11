@@ -1,5 +1,10 @@
 # Blog API
 
+
+![CI](https://github.com/sanjing/blog-api/actions/workflows/ci.yml/badge.svg)
+![Coverage](https://codecov.io/gh/sanjing/blog-api/branch/main/graph/badge.svg)
+
+A blog API built with FastAPI, SQLAlchemy 2.0, and PostgreSQL/SQLite.
 A blog API built with FastAPI, SQLAlchemy 2.0, and PostgreSQL/SQLite.
 
 ## 功能

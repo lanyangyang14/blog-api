@@ -3,7 +3,6 @@
 import json
 import logging
 import logging.config
-import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -33,11 +32,11 @@ class ConsoleFormatter(logging.Formatter):
     """控制台格式化器，带颜色（可选）。"""
 
     COLORS = {
-        "DEBUG": "\033[36m",      # 青色
-        "INFO": "\033[32m",       # 绿色
-        "WARNING": "\033[33m",    # 黄色
-        "ERROR": "\033[31m",      # 红色
-        "CRITICAL": "\033[35m",   # 紫色
+        "DEBUG": "\033[36m",  # 青色
+        "INFO": "\033[32m",  # 绿色
+        "WARNING": "\033[33m",  # 黄色
+        "ERROR": "\033[31m",  # 红色
+        "CRITICAL": "\033[35m",  # 紫色
     }
     RESET = "\033[0m"
 
@@ -77,7 +76,7 @@ def setup_logging() -> None:
                 "level": "DEBUG",
                 "formatter": "json",
                 "filename": str(log_dir / "app.log"),
-                "maxBytes": 10 * 1024 * 1024,   # 10MB
+                "maxBytes": 10 * 1024 * 1024,  # 10MB
                 "backupCount": 5,
                 "encoding": "utf-8",
             },

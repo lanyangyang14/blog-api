@@ -32,6 +32,7 @@ dev = [
     "ruff>=0.7",
     "mypy>=1.13",
     "pre-commit>=4.0",
+    "types-python-jose",
 ]
 
 [build-system]
@@ -67,8 +68,8 @@ warn_unreachable = true
 plugins = ["pydantic.mypy"]
 
 [[tool.mypy.overrides]]
-module = "tests.*"
-disallow_untyped_defs = false
+module = "blog_api.exception_handlers"
+disable_error_code = ["misc"]
 
 # ============ pytest ============
 [tool.pytest.ini_options]

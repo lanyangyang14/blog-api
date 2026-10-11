@@ -1,14 +1,14 @@
-""""写测试"""
-import secrets
+""" "写测试"""
 
 import pytest
 
-from blog_api.config import settings, get_settings, Settings
+from blog_api.config import Settings, get_settings, settings
+from blog_api.exceptions import ValidationError
 
 
 def test_get_settings_load():
     """配置能加载"""
-    settings=get_settings()
+    settings = get_settings()
     assert settings.app_name == "blog-api"
     assert settings.secret_key
     assert len(settings.secret_key) >= 32
@@ -17,17 +17,16 @@ def test_get_settings_load():
 
 def test_settings_is_development():
     """开发环境测试"""
-    settings=get_settings()
+    settings = get_settings()
     assert settings.is_development is True
     assert settings.is_production is False
 
 
 def test_cors_origins_parsing(monkeypatch):
     """CORS从字符串解析"""
-    settings=Settings(
+    settings = Settings(
         secret_key="a" * 32,
         cors_origins="http://a.com,http://b.com",
-
     )
     assert settings.cors_origins == ["http://a.com", "http://b.com"]
 
@@ -40,7 +39,5 @@ def test_log_level_uppercase(monkeypatch):
 
 def test_secret_key_too_short(monkeypatch):
     """SECRET_KEY太短报错"""
-    with pytest.raises(Exception):
+    with pytest.raises(ValidationError):
         Settings(secret_key="short")
-
-

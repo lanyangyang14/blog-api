@@ -13,8 +13,8 @@ from blog_api.core.security import (
 )
 from blog_api.exceptions import UnauthorizedError
 
-
 # ============ 密码哈希 ============
+
 
 def test_hash_password():
     """哈希后不是明文。"""
@@ -44,12 +44,13 @@ def test_verify_password_wrong():
 
 # ============ JWT ============
 
+
 def test_create_access_token():
     """能创建 token。"""
     token = create_access_token(subject=1)
     assert isinstance(token, str)
     assert len(token) > 50
-    assert token.count(".") == 2   # JWT 有三段
+    assert token.count(".") == 2  # JWT 有三段
 
 
 def test_decode_token():
@@ -78,6 +79,7 @@ def test_decode_invalid_token():
 def test_decode_token_wrong_signature():
     """签名不对报错。"""
     from jose import jwt
+
     fake = jwt.encode({"sub": "1"}, "wrong-secret", algorithm="HS256")
     with pytest.raises(UnauthorizedError):
         decode_access_token(fake)

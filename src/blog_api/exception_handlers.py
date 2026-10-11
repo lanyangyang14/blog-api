@@ -34,7 +34,7 @@ def register_exception_handlers(app: FastAPI) -> None:
         """处理 Pydantic 验证错误。"""
         logger.warning("请求验证失败: %s", exc.errors())
         return JSONResponse(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,   # ← 修正
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,  # ← 修正
             content={
                 "error": "VALIDATION_ERROR",
                 "message": "请求参数验证失败",
@@ -43,9 +43,7 @@ def register_exception_handlers(app: FastAPI) -> None:
         )
 
     @app.exception_handler(StarletteHTTPException)
-    async def http_exception_handler(
-        request: Request, exc: StarletteHTTPException
-    ) -> JSONResponse:
+    async def http_exception_handler(request: Request, exc: StarletteHTTPException) -> JSONResponse:
         """处理 HTTPException。"""
         return JSONResponse(
             status_code=exc.status_code,
@@ -57,9 +55,7 @@ def register_exception_handlers(app: FastAPI) -> None:
         )
 
     @app.exception_handler(Exception)
-    async def generic_exception_handler(
-        request: Request, exc: Exception
-    ) -> JSONResponse:
+    async def generic_exception_handler(request: Request, exc: Exception) -> JSONResponse:
         """兜底处理未捕获异常。"""
         logger.exception("未处理异常: %s %s", request.method, request.url)
         return JSONResponse(
