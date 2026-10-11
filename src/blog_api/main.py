@@ -4,7 +4,8 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from blog_api.excption_handlers import register_exception_handlers
+from blog_api.api import v1_router
+from blog_api.exception_handlers import register_exception_handlers
 from blog_api.config import settings
 from blog_api.logging_config import get_logger,setup_logging
 
@@ -46,6 +47,9 @@ app.add_middleware(
 
 #注册异常处理器
 register_exception_handlers(app)
+
+#注册路由
+app.include_router(v1_router)
 
 
 @app.get("/",tags=["root"])

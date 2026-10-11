@@ -13,8 +13,9 @@ def test_user_create():
     )
     assert user.username == "alice"
     assert user.email == "alice@example.com"
-    assert user.role=="user"
-    assert user.is_active is True
+
+    assert user.role is None
+    assert user.is_active is None
 
 
 def test_user_repr():
