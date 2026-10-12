@@ -1,4 +1,4 @@
-"""应用配置。从环境变量读取，带类型校验"""
+"""应用配置。从环境变量读取，带类型校验。"""
 
 from functools import cache
 from typing import Literal
@@ -8,11 +8,15 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    """应用配置"""
+    """应用配置。"""
 
     model_config = SettingsConfigDict(
-        env_file=".env", env_file_encoding="utf-8", case_sensitive=False, extra="ignore"
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore",
     )
+
     # =======应用=======
     app_name: str = "blog-api"
     app_env: Literal["development", "testing", "production"] = "development"
@@ -33,18 +37,17 @@ class Settings(BaseSettings):
 
     @field_validator("cors_origins", mode="before")
     @classmethod
-    def parse_cors_origins(cls, v):
-        """支持从逗号分割字符串解析"""
+    def parse_cors_origins(cls, v: str | list[str]) -> list[str]:
+        """支持从逗号分割字符串解析。"""
         if isinstance(v, str):
             return [origin.strip() for origin in v.split(",") if origin.strip()]
         return v
 
     @field_validator("log_level", mode="before")
     @classmethod
-    def upper_log_level(cls, v:str|list[str])->list[str]:
-        if isinstance(v, str):
-            return v.upper()
-        return v
+    def upper_log_level(cls, v: str) -> str:
+        """日志级别转大写。"""
+        return v.upper()
 
     @property
     def is_development(self) -> bool:
@@ -57,7 +60,7 @@ class Settings(BaseSettings):
 
 @cache
 def get_settings() -> Settings:
-    """获取配置单例"""
+    """获取配置单例。"""
     return Settings()
 
 

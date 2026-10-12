@@ -1,8 +1,9 @@
 """数据库连接和Session管理"""
-from typing import Generator
+
+from collections.abc import Generator
 
 from sqlalchemy import create_engine
-from sqlalchemy.orm import DeclarativeBase, sessionmaker, Session
+from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
 from blog_api.config import settings
 
@@ -30,7 +31,7 @@ SessionLocal = sessionmaker(
 )
 
 
-def get_db()->Generator[Session, None, None]:
+def get_db() -> Generator[Session]:
     db = SessionLocal()
     try:
         yield db

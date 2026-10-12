@@ -3,6 +3,7 @@
 from fastapi import APIRouter, status
 
 from blog_api.api.deps import CurrentUser, DbSession
+from blog_api.models import User
 from blog_api.schemas import Token, UserCreate, UserLogin, UserResponse
 from blog_api.services import AuthService
 
@@ -12,7 +13,7 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 @router.post(
     "/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED, summary="注册"
 )
-def register(data: UserCreate, db: DbSession) -> UserResponse:
+def register(data: UserCreate, db: DbSession) -> User:
     """注册新用户"""
     service = AuthService(db)
     user = service.register(data)
@@ -36,6 +37,6 @@ def login(data: UserLogin, db: DbSession) -> Token:
     response_model=UserResponse,
     summary="当前用户",
 )
-def me(current_user: CurrentUser) -> UserResponse:
+def me(current_user: CurrentUser) -> User:
     """ "获得当前的登录用户信息"""
     return current_user

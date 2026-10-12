@@ -1,7 +1,7 @@
 "FastAPI应用入口"
 
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -13,7 +13,7 @@ from blog_api.logging_config import get_logger, setup_logging
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI)-> AsyncGenerator[None, None]:
+async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     """应用生命周期"""
     # 启动时
     setup_logging()
