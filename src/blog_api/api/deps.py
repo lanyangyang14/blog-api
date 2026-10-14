@@ -13,7 +13,7 @@ from blog_api.models import User
 from blog_api.repositories import UserRepository
 
 # OAuth2 scheme,tokenUrl只想登录端点
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v1/auth/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
 
 # 类名别名，方便注释
 DbSession = Annotated[Session, Depends(get_db)]

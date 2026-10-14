@@ -1,5 +1,6 @@
 from logging.config import fileConfig
 
+import blog_api.models  # noqa: F401
 from alembic import context
 from blog_api.database import Base
 

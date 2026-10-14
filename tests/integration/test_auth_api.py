@@ -98,7 +98,7 @@ def test_login_success(client):
         },
     )
     response = client.post(
-        "/api/v1/auth/login",
+        "/api/v1/auth/login/json",
         json={
             "username": "alice",
             "password": "password123",
@@ -121,7 +121,7 @@ def test_login_wrong_password(client):
         },
     )
     response = client.post(
-        "/api/v1/auth/login",
+        "/api/v1/auth/login/json",
         json={
             "username": "alice",
             "password": "wrong",
@@ -133,7 +133,7 @@ def test_login_wrong_password(client):
 def test_login_user_not_found(client):
     """用户不存在。"""
     response = client.post(
-        "/api/v1/auth/login",
+        "/api/v1/auth/login/json",
         json={
             "username": "nobody",
             "password": "password123",
@@ -153,7 +153,7 @@ def test_me_success(client):
         },
     )
     login_response = client.post(
-        "/api/v1/auth/login",
+        "/api/v1/auth/login/json",
         json={
             "username": "alice",
             "password": "password123",

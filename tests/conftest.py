@@ -73,17 +73,24 @@ def register_user(client, sample_user_data):
 
 @pytest.fixture()
 def auth_token(client, sample_user_data):
-    """登陆并返回token的fixture"""
-    client.post("/api/v1/auth/login", json=sample_user_data)
-    response = client.post(
+    """注册并登录，返回 token。"""
+    # 1. 先注册
+    register_response = client.post(
         "/api/v1/auth/register",
+        json=sample_user_data,
+    )
+    assert register_response.status_code == 201, register_response.text
+
+    # 2. 再登录
+    login_response = client.post(
+        "/api/v1/auth/login/json",
         json={
             "username": sample_user_data["username"],
             "password": sample_user_data["password"],
         },
     )
-    assert response.status_code == 200
-    return response.json()["access_token"]
+    assert login_response.status_code == 200, login_response.text
+    return login_response.json()["access_token"]
 
 
 @pytest.fixture()

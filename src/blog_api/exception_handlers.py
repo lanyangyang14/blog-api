@@ -32,13 +32,22 @@ def register_exception_handlers(app: FastAPI) -> None:
         request: Request, exc: RequestValidationError
     ) -> JSONResponse:
         """处理 Pydantic 验证错误。"""
-        logger.warning("请求验证失败: %s", exc.errors())
+        # 手动简化 errors，避免 bytes 等不可序列化的对象
+        errors = [
+            {
+                "type": e.get("type"),
+                "loc": list(e.get("loc", [])),
+                "msg": e.get("msg"),
+            }
+            for e in exc.errors()
+        ]
+        logger.warning("请求验证失败: %s", errors)
         return JSONResponse(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,  # ← 修正
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             content={
                 "error": "VALIDATION_ERROR",
                 "message": "请求参数验证失败",
-                "details": {"errors": exc.errors()},
+                "details": {"errors": errors},
             },
         )
 

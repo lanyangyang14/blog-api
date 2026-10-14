@@ -1,15 +1,21 @@
-"""User模型"""
+"""User 模型。"""
 
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, DateTime, String, func
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from blog_api.database import Base
 
+if TYPE_CHECKING:
+    from blog_api.models.comment import Comment
+    from blog_api.models.like import Like
+    from blog_api.models.post import Post
+
 
 class User(Base):
-    """用户"""
+    """用户。"""
 
     __tablename__ = "users"
 
@@ -29,5 +35,16 @@ class User(Base):
         DateTime, server_default=func.now(), onupdate=func.now()
     )
 
+    # 关系
+    posts: Mapped[list["Post"]] = relationship(
+        "Post", back_populates="author", cascade="all, delete-orphan"
+    )
+    comments: Mapped[list["Comment"]] = relationship(
+        "Comment", back_populates="author", cascade="all, delete-orphan"
+    )
+    likes: Mapped[list["Like"]] = relationship(
+        "Like", back_populates="user", cascade="all, delete-orphan"
+    )
+
     def __repr__(self) -> str:
-        return f"<User(id={self.id},username={self.username})>"
+        return f"<User(id={self.id}, username={self.username!r})>"
