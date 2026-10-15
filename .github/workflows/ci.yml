@@ -7,6 +7,14 @@ on:
     branches: [main, develop]
 
 jobs:
+  docker-build:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build
+        run: docker build -t blog-api:test .
   lint:
     name: Lint
     runs-on: ubuntu-latest

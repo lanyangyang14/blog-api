@@ -11,7 +11,7 @@ from blog_api.config import settings
 
 
 class JsonFormatter(logging.Formatter):
-    """JSON 格式化器，便于日志系统采集。"""
+    """JSON 格式化器。"""
 
     def format(self, record: logging.LogRecord) -> str:
         log_data: dict[str, Any] = {
@@ -29,14 +29,14 @@ class JsonFormatter(logging.Formatter):
 
 
 class ConsoleFormatter(logging.Formatter):
-    """控制台格式化器，带颜色（可选）。"""
+    """控制台格式化器，带颜色。"""
 
     COLORS = {
-        "DEBUG": "\033[36m",  # 青色
-        "INFO": "\033[32m",  # 绿色
-        "WARNING": "\033[33m",  # 黄色
-        "ERROR": "\033[31m",  # 红色
-        "CRITICAL": "\033[35m",  # 紫色
+        "DEBUG": "\033[36m",
+        "INFO": "\033[32m",
+        "WARNING": "\033[33m",
+        "ERROR": "\033[31m",
+        "CRITICAL": "\033[35m",
     }
     RESET = "\033[0m"
 
@@ -47,9 +47,46 @@ class ConsoleFormatter(logging.Formatter):
 
 
 def setup_logging() -> None:
-    """配置日志。"""
-    log_dir = Path(settings.log_dir)
-    log_dir.mkdir(exist_ok=True)
+    """配置日志。
+
+    - 生产环境：只输出到 stdout（容器友好）
+    - 开发环境：输出到控制台 + 文件
+    """
+    handlers: dict[str, Any] = {
+        "console": {
+            "class": "logging.StreamHandler",
+            "level": "DEBUG" if settings.is_development else "INFO",
+            "formatter": "console",
+            "stream": "ext://sys.stdout",
+        },
+    }
+
+    logger_handlers = ["console"]
+
+    # 开发环境才写文件
+    if settings.is_development:
+        log_dir = Path(settings.log_dir)
+        log_dir.mkdir(exist_ok=True)
+
+        handlers["file"] = {
+            "class": "logging.handlers.RotatingFileHandler",
+            "level": "DEBUG",
+            "formatter": "json",
+            "filename": str(log_dir / "app.log"),
+            "maxBytes": 10 * 1024 * 1024,
+            "backupCount": 5,
+            "encoding": "utf-8",
+        }
+        handlers["error_file"] = {
+            "class": "logging.handlers.RotatingFileHandler",
+            "level": "ERROR",
+            "formatter": "json",
+            "filename": str(log_dir / "error.log"),
+            "maxBytes": 10 * 1024 * 1024,
+            "backupCount": 5,
+            "encoding": "utf-8",
+        }
+        logger_handlers = ["console", "file", "error_file"]
 
     config = {
         "version": 1,
@@ -64,36 +101,11 @@ def setup_logging() -> None:
                 "()": "blog_api.logging_config.JsonFormatter",
             },
         },
-        "handlers": {
-            "console": {
-                "class": "logging.StreamHandler",
-                "level": "DEBUG" if settings.is_development else "INFO",
-                "formatter": "console",
-                "stream": "ext://sys.stdout",
-            },
-            "file": {
-                "class": "logging.handlers.RotatingFileHandler",
-                "level": "DEBUG",
-                "formatter": "json",
-                "filename": str(log_dir / "app.log"),
-                "maxBytes": 10 * 1024 * 1024,  # 10MB
-                "backupCount": 5,
-                "encoding": "utf-8",
-            },
-            "error_file": {
-                "class": "logging.handlers.RotatingFileHandler",
-                "level": "ERROR",
-                "formatter": "json",
-                "filename": str(log_dir / "error.log"),
-                "maxBytes": 10 * 1024 * 1024,
-                "backupCount": 5,
-                "encoding": "utf-8",
-            },
-        },
+        "handlers": handlers,
         "loggers": {
             "blog_api": {
                 "level": settings.log_level,
-                "handlers": ["console", "file", "error_file"],
+                "handlers": logger_handlers,
                 "propagate": False,
             },
             "uvicorn": {

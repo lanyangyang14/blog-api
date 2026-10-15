@@ -94,3 +94,33 @@ pytest --cov=src
 ## License
 
 MIT
+
+## Docker 部署
+
+### 本地运行
+
+\`\`\`bash
+# 设置 SECRET_KEY
+export SECRET_KEY="your-secret-key-at-least-32-chars"
+
+# 启动
+docker compose up -d --build
+
+# 跑迁移
+docker compose run --rm migrate
+
+# 访问
+# http://localhost:8000/docs
+\`\`\`
+
+### 停止
+
+\`\`\`bash
+docker compose down
+\`\`\`
+
+### 查看日志
+
+\`\`\`bash
+docker compose logs -f app
+\`\`\`
