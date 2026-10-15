@@ -4,6 +4,7 @@ import logging
 
 from sqlalchemy.orm import Session
 
+from blog_api.core.rate_limit import check_rate_limit
 from blog_api.exceptions import ForbiddenError, NotFoundError, ValidationError
 from blog_api.models import Comment, User
 from blog_api.repositories import CommentRepository, PostRepository
@@ -24,6 +25,7 @@ class CommentService:
         data: CommentCreate,
         author: User,
     ) -> Comment:
+        check_rate_limit(f"rate.user:{author.id}:comment", max_requests=5, window_seconds=60)
         """创建评论"""
         if not self.post_repo.get_by_id(post_id):
             raise NotFoundError("Post", post_id)

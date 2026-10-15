@@ -97,3 +97,15 @@ def auth_token(client, sample_user_data):
 def auth_headers(auth_token):
     """带token的headers"""
     return {"Authorization": f"Bearer {auth_token}"}
+
+
+@pytest.fixture(autouse=True)
+def mock_cache(mocker):
+    """Mock缓存，测试时不连接redis"""
+    mock = mocker.patch("blog_api.core.cache.cache")
+    mock.get.return_value = None
+    mock.set.return_value = None
+    mock.delete.return_value = None
+    mock.delete_pattern.return_value = None
+    mock.client.incr.return_value = 1
+    return mock

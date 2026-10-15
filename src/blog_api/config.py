@@ -32,6 +32,10 @@ class Settings(BaseSettings):
     # =======数据库======
     database_url: str = "sqlite:///./blog.db"
 
+    # =======Redis=======
+    redis_url: str = "redis://redis:6379/0"
+    cache_ttl: int = 300
+
     # =======CORS=======
     cors_origins: list[str] = ["http://localhost:3000", "http://localhost:8000"]
 

@@ -21,6 +21,7 @@ dependencies = [
     "python-multipart>=0.0.12",
     "markdown-it-py>=3.0",
     "httpx>=0.27",
+    "redis>=5.0",
 ]
 
 [project.optional-dependencies]
@@ -33,6 +34,8 @@ dev = [
     "mypy>=1.13",
     "pre-commit>=4.0",
     "types-python-jose",
+     "redis>=5.0",
+     "types-redis",
 ]
 
 [build-system]
@@ -93,3 +96,5 @@ exclude_lines = [
     "if __name__ == .__main__.:",
     "raise NotImplementedError",
 ]
+#=====sqlalchemy============
+[tool.sqlalchemy]
