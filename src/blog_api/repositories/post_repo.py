@@ -1,21 +1,24 @@
 """Post 数据访问。"""
 
+from typing import Any
+
 from sqlalchemy import func, or_, select
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from blog_api.models import Post
 
 
 class PostRepository:
-    def __init__(self, session: Session):
+    def __init__(self, session: AsyncSession):
         self.session = session
 
-    def create(self, post: Post) -> Post:
+    async def create(self, post: Post) -> Post:
         self.session.add(post)
-        self.session.flush()
+        await self.session.flush()
         return post
 
-    def get_by_id(self, post_id: int) -> Post | None:
+    async def get_by_id(self, post_id: int) -> Post | None:
         stmt = (
             select(Post)
             .where(Post.id == post_id)
@@ -25,9 +28,10 @@ class PostRepository:
                 selectinload(Post.tags),
             )
         )
-        return self.session.execute(stmt).scalar_one_or_none()
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()
 
-    def get_by_slug(self, slug: str) -> Post | None:
+    async def get_by_slug(self, slug: str) -> Post | None:
         stmt = (
             select(Post)
             .where(Post.slug == slug)
@@ -37,9 +41,10 @@ class PostRepository:
                 selectinload(Post.tags),
             )
         )
-        return self.session.execute(stmt).scalar_one_or_none()
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()
 
-    def list_posts(
+    async def list_posts(
         self,
         *,
         page: int = 1,
@@ -51,11 +56,9 @@ class PostRepository:
         q: str | None = None,
         sort: str = "-created_at",
     ) -> tuple[list[Post], int]:
-        """分页查询，返回 (posts, total)。"""
-        stmt = select(Post)
-        count_stmt = select(func.count(Post.id))
+        stmt: Any = select(Post)
+        count_stmt: Any = select(func.count(Post.id))
 
-        # 过滤条件
         conditions = []
         if status:
             conditions.append(Post.status == status)
@@ -78,25 +81,23 @@ class PostRepository:
             stmt = stmt.where(cond)
             count_stmt = count_stmt.where(cond)
 
-        # 总数
-        total = self.session.execute(count_stmt).scalar_one()
+        result = await self.session.execute(count_stmt)
+        total: int = result.scalar_one()
 
-        # 排序
         if sort.startswith("-"):
             stmt = stmt.order_by(getattr(Post, sort[1:]).desc())
         else:
             stmt = stmt.order_by(getattr(Post, sort).asc())
 
-        # 分页
         stmt = stmt.offset((page - 1) * size).limit(size)
         stmt = stmt.options(
             selectinload(Post.author),
             selectinload(Post.category),
             selectinload(Post.tags),
         )
-
-        posts = list(self.session.execute(stmt).scalars().all())
+        result = await self.session.execute(stmt)
+        posts: list[Post] = list(result.scalars().all())
         return posts, total
 
-    def delete(self, post: Post) -> None:
-        self.session.delete(post)
+    async def delete(self, post: Post) -> None:
+        await self.session.delete(post)

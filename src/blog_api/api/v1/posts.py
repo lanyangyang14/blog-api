@@ -19,16 +19,15 @@ router = APIRouter(prefix="/posts", tags=["posts"])
 
 
 @router.post("", response_model=PostResponse, status_code=status.HTTP_201_CREATED)
-def create_post(data: PostCreate, db: DbSession, current_user: CurrentUser) -> Post:
-    """创建文章。"""
+async def create_post(data: PostCreate, db: DbSession, current_user: CurrentUser) -> Post:
     service = PostService(db)
-    return service.create(data, current_user)
+    return await service.create(data, current_user)
 
 
 @router.get("", response_model=PostListResponse)
-def list_posts(
+async def list_posts(
     db: DbSession,
-    page: int = Query(1, ge=1),
+    page: int = Query(1, ge=1, le=1000),
     size: int = Query(20, ge=1, le=100),
     status_filter: Literal["draft", "published", "archived"] | None = Query(None, alias="status"),
     category_id: int | None = None,
@@ -37,9 +36,8 @@ def list_posts(
     q: str | None = None,
     sort: str = Query("-created_at"),
 ) -> PostListResponse:
-    """文章列表。"""
     service = PostService(db)
-    posts, total = service.list_posts(
+    posts, total = await service.list_posts(
         page=page,
         size=size,
         status=status_filter,
@@ -60,21 +58,20 @@ def list_posts(
 
 
 @router.get("/{slug}", response_model=PostResponse)
-def get_post(slug: str, db: DbSession) -> Post:
-    """文章详情（按 slug）。"""
+async def get_post(slug: str, db: DbSession) -> Post:
     service = PostService(db)
-    return service.get_by_slug(slug)
+    return await service.get_by_slug(slug)
 
 
 @router.put("/{post_id}", response_model=PostResponse)
-def update_post(post_id: int, data: PostUpdate, db: DbSession, current_user: CurrentUser) -> Post:
-    """更新文章。"""
+async def update_post(
+    post_id: int, data: PostUpdate, db: DbSession, current_user: CurrentUser
+) -> Post:
     service = PostService(db)
-    return service.update(post_id, data, current_user)
+    return await service.update(post_id, data, current_user)
 
 
 @router.delete("/{post_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_post(post_id: int, db: DbSession, current_user: CurrentUser) -> None:
-    """删除文章。"""
+async def delete_post(post_id: int, db: DbSession, current_user: CurrentUser) -> None:
     service = PostService(db)
-    service.delete(post_id, current_user)
+    await service.delete(post_id, current_user)

@@ -8,4 +8,4 @@ class LikeResponse(BaseModel):
 
     post_id: int
     like_count: int
-    is_like: bool
+    is_liked: bool

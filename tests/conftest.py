@@ -1,61 +1,88 @@
-"""pytest 全局配置。"""
+"""pytest 全局配置（异步）。"""
 
-from collections.abc import Generator
+from collections.abc import AsyncGenerator
 
-import pytest
-from fastapi.testclient import TestClient
-from sqlalchemy import StaticPool, create_engine
-from sqlalchemy.orm import Session, sessionmaker
+import pytest_asyncio
+from httpx import ASGITransport, AsyncClient
+from sqlalchemy.ext.asyncio import (
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
+from sqlalchemy.pool import StaticPool
 
-import blog_api.models  # noqa: F401  确保模型已注册
+import blog_api.models  # noqa: F401
 from blog_api.database import Base, get_db
 from blog_api.main import app
 
+# ============ Mock Cache ============
 
-@pytest.fixture(scope="session")
-def test_engine():
-    """测试用的内存数据库。"""
-    engine = create_engine(
-        "sqlite:///:memory:",
+
+@pytest_asyncio.fixture(autouse=True)
+async def mock_cache(mocker):
+    """Mock 缓存，测试时不连 Redis。"""
+    mock = mocker.patch("blog_api.core.cache.cache")
+    mock.get.return_value = None
+    mock.set.return_value = None
+    mock.delete.return_value = None
+    mock.delete_pattern.return_value = None
+    mock.incr.return_value = 1
+    mock.expire.return_value = None
+    return mock
+
+
+# ============ 数据库 ============
+
+
+@pytest_asyncio.fixture(scope="session")
+async def test_engine():
+    engine = create_async_engine(
+        "sqlite+aiosqlite:///:memory:",
         connect_args={"check_same_thread": False},
-        poolclass=StaticPool,  # ← 关键：让所有连接共享同一个内存数据库
+        poolclass=StaticPool,
     )
-    Base.metadata.create_all(engine)
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
     yield engine
-    engine.dispose()
+    await engine.dispose()
 
 
-@pytest.fixture()
-def db_session(test_engine) -> Generator[Session]:
+@pytest_asyncio.fixture
+async def db_session(test_engine) -> AsyncGenerator[AsyncSession]:
     """每个测试独立事务，结束后回滚。"""
-    connection = test_engine.connect()
-    transaction = connection.begin()
-    session_local = sessionmaker(bind=connection)  # ← 绑 connection
-    session = session_local()
+    async with test_engine.connect() as connection:
+        transaction = await connection.begin()
+        session_factory = async_sessionmaker(
+            bind=connection,
+            expire_on_commit=False,  # ← 加这个
+        )
+        session = session_factory()
+        try:
+            yield session
+        finally:
+            await session.close()
+            await transaction.rollback()
 
-    yield session
 
-    session.close()
-    transaction.rollback()
-    connection.close()
+@pytest_asyncio.fixture
+async def client(db_session) -> AsyncGenerator[AsyncClient]:
+    """测试客户端。"""
 
-
-@pytest.fixture()
-def client(db_session) -> Generator[TestClient]:
-    """测试客户端，用测试数据库。"""
-
-    def override_get_db():
+    async def override_get_db():
         yield db_session
 
     app.dependency_overrides[get_db] = override_get_db
-    with TestClient(app) as c:
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as c:
         yield c
     app.dependency_overrides.clear()
 
 
-@pytest.fixture()
-def sample_user_data():
-    """ "通用用户数据"""
+# ============ 用户 ============
+
+
+@pytest_asyncio.fixture
+async def sample_user_data():
     return {
         "username": "testuser",
         "email": "test@example.com",
@@ -63,26 +90,13 @@ def sample_user_data():
     }
 
 
-@pytest.fixture()
-def register_user(client, sample_user_data):
-    """注册并返回用户信息的fixture"""
-    response = client.post("/api/v1/auth/register", json=sample_user_data)
-    assert response.status_code == 201
-    return response.json()
-
-
-@pytest.fixture()
-def auth_token(client, sample_user_data):
+@pytest_asyncio.fixture
+async def auth_token(client, sample_user_data):
     """注册并登录，返回 token。"""
-    # 1. 先注册
-    register_response = client.post(
-        "/api/v1/auth/register",
-        json=sample_user_data,
-    )
+    register_response = await client.post("/api/v1/auth/register", json=sample_user_data)
     assert register_response.status_code == 201, register_response.text
 
-    # 2. 再登录
-    login_response = client.post(
+    login_response = await client.post(
         "/api/v1/auth/login/json",
         json={
             "username": sample_user_data["username"],
@@ -93,19 +107,6 @@ def auth_token(client, sample_user_data):
     return login_response.json()["access_token"]
 
 
-@pytest.fixture()
-def auth_headers(auth_token):
-    """带token的headers"""
+@pytest_asyncio.fixture
+async def auth_headers(auth_token):
     return {"Authorization": f"Bearer {auth_token}"}
-
-
-@pytest.fixture(autouse=True)
-def mock_cache(mocker):
-    """Mock缓存，测试时不连接redis"""
-    mock = mocker.patch("blog_api.core.cache.cache")
-    mock.get.return_value = None
-    mock.set.return_value = None
-    mock.delete.return_value = None
-    mock.delete_pattern.return_value = None
-    mock.client.incr.return_value = 1
-    return mock

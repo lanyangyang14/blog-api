@@ -51,9 +51,12 @@ def run_migrations_offline() -> None:
 
 def run_migrations_online() -> None:
     """Run migrations in 'online' mode."""
-    from blog_api.database import engine
+    from sqlalchemy import create_engine
 
-    connectable = engine
+    from blog_api.database import settings
+
+    sync_url = settings.database_url.replace("+asyncpg", "+psycopg")
+    connectable = create_engine(sync_url)
 
     with connectable.connect() as connection:
         context.configure(

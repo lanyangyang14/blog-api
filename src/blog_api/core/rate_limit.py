@@ -1,4 +1,4 @@
-"""简单的 Redis 限流。"""
+"""简单的 Redis 限流（异步）。"""
 
 import logging
 
@@ -16,7 +16,7 @@ class RateLimitError(AppError):
         super().__init__(message)
 
 
-def check_rate_limit(key: str, max_requests: int, window_seconds: int) -> None:
+async def check_rate_limit(key: str, max_requests: int, window_seconds: int) -> None:
     """滑动窗口限流。
 
     Args:
@@ -28,9 +28,9 @@ def check_rate_limit(key: str, max_requests: int, window_seconds: int) -> None:
         RateLimitError: 超限。
     """
     try:
-        current = cache.incr(key)
+        current = await cache.incr(key)
         if current == 1:
-            cache.expire(key, window_seconds)
+            await cache.expire(key, window_seconds)
         if current > max_requests:
             raise RateLimitError(f"请求过于频繁，请 {window_seconds} 秒后重试")
     except RateLimitError:

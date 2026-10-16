@@ -1,39 +1,50 @@
-"""数据库连接和Session管理"""
+"""数据库连接和 Session 管理（异步）。"""
 
-from collections.abc import Generator
+from collections.abc import AsyncGenerator
 
-from sqlalchemy import create_engine
-from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
+from sqlalchemy.ext.asyncio import (
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
+from sqlalchemy.orm import DeclarativeBase
 
 from blog_api.config import settings
 
 
 class Base(DeclarativeBase):
-    """所有ORM模型的基类"""
+    """所有 ORM 模型的基类。"""
 
     pass
 
 
-# 创建引擎
-engine = create_engine(
+# 创建异步引擎
+engine = create_async_engine(
     settings.database_url,
-    echo=settings.debug,  # 调试时打印SQL
-    pool_pre_ping=True,  # 连接前检查
+    echo=settings.debug,
+    pool_pre_ping=True,
     future=True,
 )
 
-# session 工场
-SessionLocal = sessionmaker(
+# 异步 Session 工厂
+AsyncSessionLocal = async_sessionmaker(
     bind=engine,
     autoflush=False,
     autocommit=False,
-    expire_on_commit=False,  # commit后对象不过期
+    expire_on_commit=False,
 )
 
 
-def get_db() -> Generator[Session]:
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+async def get_db() -> AsyncGenerator[AsyncSession]:
+    """FastAPI 依赖：获取异步数据库 Session。
+
+    用法：
+        @app.get("/")
+        async def endpoint(db: AsyncSession = Depends(get_db)):
+            ...
+    """
+    async with AsyncSessionLocal() as session:
+        try:
+            yield session
+        finally:
+            await session.close()

@@ -1,34 +1,53 @@
-"""Category 数据访问"""
+"""Category 数据访问。"""
 
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from blog_api.models import Category
 
 
 class CategoryRepository:
-    def __init__(self, session: Session):
+    """Category 的数据库操作（异步）。"""
+
+    def __init__(self, session: AsyncSession):
         self.session = session
 
-    def create(self, category: Category) -> Category:
+    async def create(self, category: Category) -> Category:
+        """创建分类（flush，不 commit）。"""
         self.session.add(category)
-        self.session.flush()
+        await self.session.flush()
         return category
 
-    def get_by_id(self, category_id: int) -> Category | None:
-        return self.session.get(Category, category_id)
+    async def get_by_id(self, category_id: int) -> Category | None:
+        """按 ID 查。"""
+        return await self.session.get(Category, category_id)
 
-    def get_by_name(self, name: str) -> Category | None:
+    async def get_by_name(self, name: str) -> Category | None:
+        """按名称查。"""
         stmt = select(Category).where(Category.name == name)
-        return self.session.execute(stmt).scalar_one_or_none()
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()
 
-    def get__by_slug(self, slug: str) -> Category | None:
+    async def get_by_slug(self, slug: str) -> Category | None:
+        """按 slug 查。"""
         stmt = select(Category).where(Category.slug == slug)
-        return self.session.execute(stmt).scalar_one_or_none()
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()
 
-    def list_all(self) -> list[Category]:
+    async def list_all(self) -> list[Category]:
+        """列出所有分类。"""
         stmt = select(Category).order_by(Category.name)
-        return list(self.session.execute(stmt).scalars().all())
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
 
-    def delete(self, category: Category) -> None:
-        self.session.delete(category)
+    async def exists_name(self, name: str) -> bool:
+        """名称是否存在。"""
+        return await self.get_by_name(name) is not None
+
+    async def exists_slug(self, slug: str) -> bool:
+        """slug 是否存在。"""
+        return await self.get_by_slug(slug) is not None
+
+    async def delete(self, category: Category) -> None:
+        """删除分类。"""
+        await self.session.delete(category)

@@ -19,10 +19,10 @@ router = APIRouter(prefix="/auth", tags=["auth"])
     status_code=status.HTTP_201_CREATED,
     summary="注册",
 )
-def register(data: UserCreate, db: DbSession) -> User:
+async def register(data: UserCreate, db: DbSession) -> User:
     """注册新用户。"""
     service = AuthService(db)
-    return service.register(data)
+    return await service.register(data)
 
 
 @router.post(
@@ -30,13 +30,13 @@ def register(data: UserCreate, db: DbSession) -> User:
     response_model=Token,
     summary="登录（OAuth2 form-data）",
 )
-def login(
+async def login(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     db: DbSession,
 ) -> Token:
-    """登录，返回 JWT。Swagger Authorize 用这个。"""
+    """登录，返回 JWT。"""
     service = AuthService(db)
-    _, token = service.login(form_data.username, form_data.password)
+    _, token = await service.login(form_data.username, form_data.password)
     return Token(access_token=token)
 
 
@@ -45,10 +45,10 @@ def login(
     response_model=Token,
     summary="登录（JSON）",
 )
-def login_json(data: UserLogin, db: DbSession) -> Token:
-    """登录，返回 JWT。前端/脚本用这个。"""
+async def login_json(data: UserLogin, db: DbSession) -> Token:
+    """登录，返回 JWT。"""
     service = AuthService(db)
-    _, token = service.login(data.username, data.password)
+    _, token = await service.login(data.username, data.password)
     return Token(access_token=token)
 
 
@@ -57,6 +57,6 @@ def login_json(data: UserLogin, db: DbSession) -> Token:
     response_model=UserResponse,
     summary="当前用户",
 )
-def me(current_user: CurrentUser) -> User:
+async def me(current_user: CurrentUser) -> User:
     """获取当前登录用户信息。"""
     return current_user

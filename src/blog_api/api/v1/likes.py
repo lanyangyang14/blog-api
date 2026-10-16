@@ -10,18 +10,18 @@ router = APIRouter(tags=["likes"])
 
 
 @router.post("/posts/{post_id}/like", response_model=LikeResponse)
-def like_post(post_id: int, db: DbSession, current_user: CurrentUser) -> LikeResponse:
+async def like_post(post_id: int, db: DbSession, current_user: CurrentUser) -> LikeResponse:
     service = LikeService(db)
-    return service.like(post_id, current_user)
+    return await service.like(post_id, current_user)
 
 
 @router.delete("/posts/{post_id}/like", response_model=LikeResponse)
-def unlike_post(post_id: int, db: DbSession, current_user: CurrentUser) -> LikeResponse:
+async def unlike_post(post_id: int, db: DbSession, current_user: CurrentUser) -> LikeResponse:
     service = LikeService(db)
-    return service.unlike(post_id, current_user)
+    return await service.unlike(post_id, current_user)
 
 
 @router.get("/posts/{post_id}/like", response_model=LikeResponse)
-def get_like_status(post_id: int, db: DbSession, current_user: CurrentUser) -> LikeResponse:
+async def get_like_status(post_id: int, db: DbSession, current_user: CurrentUser) -> LikeResponse:
     service = LikeService(db)
-    return service.get_status(post_id, current_user)
+    return await service.get_status(post_id, current_user)
