@@ -26,6 +26,8 @@ dependencies = [
     "redis>=5.0",
     "psycopg[binary]>=3.2",
     "aiosqlite>=0.20",
+    "celery[redis]>=5.4",       # Celery + Redis broker
+    "jinja2>=3.1",              # 邮件模板（可选）
 ]
 
 [project.optional-dependencies]
@@ -75,9 +77,29 @@ warn_unreachable = true
 plugins = ["pydantic.mypy"]
 
 [[tool.mypy.overrides]]
+module = [
+    "celery",
+    "celery.*",
+    "kombu",
+    "kombu.*",
+]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "blog_api.tasks.*"
+disable_error_code = ["misc", "type-arg", "no-untyped-def"]
+
+[[tool.mypy.overrides]]
+module = "blog_api.core.celery_app"
+disable_error_code = ["import-untyped"]
+
+[[tool.mypy.overrides]]
+module = "blog_api.core.celery_beat_schedule"
+disable_error_code = ["import-untyped"]
+
+[[tool.mypy.overrides]]
 module = "blog_api.exception_handlers"
 disable_error_code = ["misc"]
-
 # ============ pytest ============
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -1,7 +1,7 @@
 """Post 服务。"""
 
 import logging
-from datetime import UTC, datetime
+from datetime import datetime
 from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -47,7 +47,7 @@ class PostService:
             status=data.status,
             category_id=data.category_id,
             author_id=author.id,
-            published_at=datetime.now(UTC) if data.status == "published" else None,
+            published_at=datetime.now() if data.status == "published" else None,
         )
         post.tags = tags
 
@@ -56,6 +56,16 @@ class PostService:
         refreshed = await self.repo.get_by_id(post.id)
         if refreshed is None:
             raise RuntimeError("Post not found after commit")
+            # 如果发布了，异步通知订阅者
+        if refreshed.status == "published":
+            from blog_api.tasks.notification import notify_new_post
+
+            notify_new_post.delay(
+                post_id=refreshed.id,
+                title=refreshed.title,
+                slug=refreshed.slug,
+                author_name=author.username,
+            )
         logger.info("文章创建成功: id=%s, title=%s", refreshed.id, refreshed.title)
         return refreshed
 
@@ -79,7 +89,7 @@ class PostService:
 
     async def update(self, post_id: int, data: PostUpdate, current_user: User) -> Post:
         post = await self.get(post_id)
-
+        old_status = post.status
         if post.author_id != current_user.id and current_user.role != "admin":
             raise ForbiddenError("无权修改此文章")
 
@@ -94,7 +104,7 @@ class PostService:
             setattr(post, key, value)
 
         if data.status == "published" and not post.published_at:
-            post.published_at = datetime.now(UTC)
+            post.published_at = datetime.now()
 
         if data.tag_ids is not None:
             tags = []
@@ -109,6 +119,16 @@ class PostService:
         refreshed = await self.repo.get_by_id(post_id)
         if refreshed is None:
             raise RuntimeError("Post not found after update")
+            # 刚刚发布
+        if old_status != "published" and refreshed.status == "published":
+            from blog_api.tasks.notification import notify_new_post
+
+            notify_new_post.delay(
+                post_id=refreshed.id,
+                title=refreshed.title,
+                slug=refreshed.slug,
+                author_name=current_user.username,
+            )
         return refreshed
 
     async def delete(self, post_id: int, current_user: User) -> None:
@@ -117,3 +137,7 @@ class PostService:
             raise ForbiddenError("无权删除此文章")
         await self.repo.delete(post)
         await self.session.commit()
+        # 异步清理关联数据
+        from blog_api.tasks.notification import cleanup_post_data
+
+        cleanup_post_data.delay(post_id=post_id)

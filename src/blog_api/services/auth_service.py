@@ -49,6 +49,14 @@ class AuthService:
             logger.exception("注册失败: username=%s", data.username)
             raise
 
+        # 异步发送邮件（不阻塞注册）
+        from blog_api.tasks.email import send_welcome_email
+
+        send_welcome_email.delay(
+            user_id=user.id,
+            email=user.email,
+            username=user.username,
+        )
         logger.info("用户注册成功: id=%s, username=%s", user.id, user.username)
         return user
 
