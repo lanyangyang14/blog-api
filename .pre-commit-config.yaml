@@ -13,7 +13,7 @@ repos:
         additional_dependencies:
           - "pydantic>=2.9"
           - "pydantic-settings>=2.5"
-          - "sqlalchemy>=2.0"
+          - "sqlalchemy[asyncio]>=2.0"
           - "fastapi>=0.115"
           - "python-jose[cryptography]>=3.3"
           - "types-python-jose"
@@ -21,7 +21,8 @@ repos:
           - "redis>=5.0"
           - "types-redis"
           - "aiosqlite>=0.20"
-        args: [--config-file=pyproject.toml]
+          - "celery[redis]>=5.4"
+        args: [ --config-file=pyproject.toml ]
         files: ^src/
 
   - repo: https://github.com/pre-commit/pre-commit-hooks

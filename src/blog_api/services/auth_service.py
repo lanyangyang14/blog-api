@@ -10,6 +10,7 @@ from blog_api.core.security import (
     verify_password,
 )
 from blog_api.exceptions import ConflictError, UnauthorizedError
+from blog_api.logging_config import get_trace_id
 from blog_api.models import User
 from blog_api.repositories import UserRepository
 from blog_api.schemas import UserCreate
@@ -56,6 +57,7 @@ class AuthService:
             user_id=user.id,
             email=user.email,
             username=user.username,
+            trace_id=get_trace_id(),
         )
         logger.info("用户注册成功: id=%s, username=%s", user.id, user.username)
         return user

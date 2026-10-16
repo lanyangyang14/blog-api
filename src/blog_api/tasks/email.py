@@ -4,6 +4,7 @@ import logging
 import time
 
 from blog_api.core.celery_app import celery_app
+from blog_api.logging_config import set_trace_id
 
 logger = logging.getLogger(__name__)
 
@@ -32,8 +33,10 @@ def send_email(self, to: str, subject: str, body: str) -> dict:
 
 
 @celery_app.task(name="tasks.send_welcome_email")
-def send_welcome_email(user_id: int, email: str, username: str) -> dict:
+def send_welcome_email(user_id: int, email: str, username: str, trace_id: str = "-") -> dict:
     """发送欢迎邮件（直接发，不嵌套任务）。"""
+    if trace_id != "-":
+        set_trace_id(trace_id)
     subject = "欢迎注册"
     body = f"你好 {username}！感谢注册。"
     return _send_email_impl(to=email, subject=subject, body=body)

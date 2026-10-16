@@ -3,11 +3,31 @@
 import json
 import logging
 import logging.config
+from contextvars import ContextVar
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 from blog_api.config import settings
+
+# 全局 trace_id（用 ContextVar 保证线程/协程隔离）
+trace_id_var: ContextVar[str] = ContextVar("trace_id", default="-")
+
+
+def get_trace_id() -> str:
+    return trace_id_var.get()
+
+
+def set_trace_id(trace_id: str) -> None:
+    trace_id_var.set(trace_id)
+
+
+class TraceIdFilter(logging.Filter):
+    """给日志记录注入 trace_id。"""
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        record.trace_id = get_trace_id()
+        return True
 
 
 class JsonFormatter(logging.Formatter):
@@ -22,6 +42,7 @@ class JsonFormatter(logging.Formatter):
             "module": record.module,
             "line": record.lineno,
             "function": record.funcName,
+            "trace_id": getattr(record, "trace_id", "-"),
         }
         if record.exc_info:
             log_data["exception"] = self.formatException(record.exc_info)
@@ -47,23 +68,20 @@ class ConsoleFormatter(logging.Formatter):
 
 
 def setup_logging() -> None:
-    """配置日志。
+    """配置日志。"""
 
-    - 生产环境：只输出到 stdout（容器友好）
-    - 开发环境：输出到控制台 + 文件
-    """
     handlers: dict[str, Any] = {
         "console": {
             "class": "logging.StreamHandler",
             "level": "DEBUG" if settings.is_development else "INFO",
             "formatter": "console",
             "stream": "ext://sys.stdout",
+            "filters": ["trace_id"],
         },
     }
 
     logger_handlers = ["console"]
 
-    # 开发环境才写文件
     if settings.is_development:
         log_dir = Path(settings.log_dir)
         log_dir.mkdir(exist_ok=True)
@@ -72,6 +90,7 @@ def setup_logging() -> None:
             "class": "logging.handlers.RotatingFileHandler",
             "level": "DEBUG",
             "formatter": "json",
+            "filters": ["trace_id"],
             "filename": str(log_dir / "app.log"),
             "maxBytes": 10 * 1024 * 1024,
             "backupCount": 5,
@@ -81,6 +100,7 @@ def setup_logging() -> None:
             "class": "logging.handlers.RotatingFileHandler",
             "level": "ERROR",
             "formatter": "json",
+            "filters": ["trace_id"],
             "filename": str(log_dir / "error.log"),
             "maxBytes": 10 * 1024 * 1024,
             "backupCount": 5,
@@ -91,10 +111,15 @@ def setup_logging() -> None:
     config = {
         "version": 1,
         "disable_existing_loggers": False,
+        "filters": {
+            "trace_id": {
+                "()": "blog_api.logging_config.TraceIdFilter",
+            },
+        },
         "formatters": {
             "console": {
                 "()": "blog_api.logging_config.ConsoleFormatter",
-                "format": "%(asctime)s | %(levelname)s | %(name)s | %(message)s",
+                "format": "%(asctime)s | %(levelname)s | [%(trace_id)s] | %(name)s | %(message)s",
                 "datefmt": "%H:%M:%S",
             },
             "json": {
@@ -119,7 +144,7 @@ def setup_logging() -> None:
                 "propagate": False,
             },
             "uvicorn.access": {
-                "level": "INFO",
+                "level": "WARNING",  # 屏蔽 access 日志
                 "handlers": ["console"],
                 "propagate": False,
             },

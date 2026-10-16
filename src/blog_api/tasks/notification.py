@@ -1,8 +1,10 @@
 """通知任务。"""
 
 import logging
+from typing import Any
 
 from blog_api.core.celery_app import celery_app
+from blog_api.logging_config import set_trace_id
 
 logger = logging.getLogger(__name__)
 
@@ -19,8 +21,11 @@ def notify_new_post(
     title: str,
     slug: str,
     author_name: str,
-) -> dict:
+    trace_id: str = "-",
+) -> dict[str, Any]:
     """通知订阅者有新文章（模拟）。"""
+    if trace_id != "-":
+        set_trace_id(trace_id)
     try:
         logger.info(
             "通知订阅者: post_id=%s, title=%s, author=%s",

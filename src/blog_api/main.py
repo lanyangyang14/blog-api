@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from blog_api.api import v1_router
 from blog_api.config import settings
+from blog_api.core.middleware import TraceIdMiddleware
 from blog_api.exception_handlers import register_exception_handlers
 from blog_api.logging_config import get_logger, setup_logging
 
@@ -39,6 +40,7 @@ app = FastAPI(
     redoc_url="/redoc" if not settings.is_production else None,
 )
 
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
@@ -46,7 +48,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
+app.add_middleware(TraceIdMiddleware)
 # 注册异常处理器
 register_exception_handlers(app)
 

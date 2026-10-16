@@ -7,6 +7,7 @@ from typing import Any
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from blog_api.exceptions import ConflictError, ForbiddenError, NotFoundError
+from blog_api.logging_config import get_trace_id
 from blog_api.models import Post, User
 from blog_api.repositories import (
     CategoryRepository,
@@ -128,6 +129,7 @@ class PostService:
                 title=refreshed.title,
                 slug=refreshed.slug,
                 author_name=current_user.username,
+                trace_id=get_trace_id(),
             )
         return refreshed
 
