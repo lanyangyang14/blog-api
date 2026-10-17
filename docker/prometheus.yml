@@ -1,0 +1,10 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: "blog-api"
+    static_configs:
+      # Windows/Mac 上 Docker 访问宿主机用 host.docker.internal
+      - targets: ["host.docker.internal:8000"]
+    metrics_path: "/metrics"

@@ -1,6 +1,7 @@
 """Comment 服务。"""
 
 import logging
+from datetime import datetime
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -35,6 +36,7 @@ class CommentService:
             author_id=author.id,
             parent_id=data.parent_id,
             content=data.content,
+            created_at=datetime.now(),
         )
         await self.repo.create(comment)
         await self.session.commit()
