@@ -30,7 +30,7 @@ services:
     depends_on:
       - app
 
-  # ============ 数据库 ============
+    # ============ 数据库 ============
   db:
     image: postgres:16-alpine
     container_name: blog-db
@@ -39,6 +39,8 @@ services:
       POSTGRES_USER: bloguser
       POSTGRES_PASSWORD: blogpass
       POSTGRES_DB: blogdb
+    ports:
+      - "5433:5432"    # 👈 加上这行！
     volumes:
       - postgres_data:/var/lib/postgresql/data
 

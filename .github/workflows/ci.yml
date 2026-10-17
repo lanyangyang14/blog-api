@@ -68,10 +68,12 @@ jobs:
 
       - name: Install
         run: pip install -e ".[dev]"
+             pip install "mypy==1.13.0"
 
       - name: Test
         env:
           SECRET_KEY: "test-secret-key-at-least-32-characters-long"
+          DATABASE_URL: "sqlite+aiosqlite:///:memory:"
         run: pytest tests/ --cov=src/blog_api --cov-report=xml --cov-report=term
 
       - name: Upload coverage

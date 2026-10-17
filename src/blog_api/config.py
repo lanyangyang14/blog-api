@@ -30,8 +30,7 @@ class Settings(BaseSettings):
     algorithm: str = "HS256"
 
     # =======数据库======
-    database_url: str = "sqlite:///./blog.db"
-
+    database_url: str = "sqlite+aiosqlite:///:memory:"
     # =======Redis=======
     redis_url: str = "redis://redis:6379/0"
     cache_ttl: int = 300
