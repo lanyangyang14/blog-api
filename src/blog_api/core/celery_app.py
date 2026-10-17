@@ -1,5 +1,7 @@
 """Celery 应用"""
 
+import os
+
 from celery import Celery
 
 from blog_api.config import settings
@@ -29,4 +31,6 @@ celery_app.conf.update(
     worker_prefetch_multiplier=1,
     worker_max_tasks_per_child=100,
     result_expires=3600,
+    # 测试环境同步执行
+    task_always_eager=os.getenv("CELERY_TASK_ALWAYS_EAGER") == "true",
 )

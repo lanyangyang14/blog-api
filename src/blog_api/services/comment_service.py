@@ -4,6 +4,7 @@ import logging
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from blog_api.core.metrics import comments_created_total
 from blog_api.exceptions import ForbiddenError, NotFoundError, ValidationError
 from blog_api.models import Comment, User
 from blog_api.repositories import CommentRepository, PostRepository
@@ -40,6 +41,7 @@ class CommentService:
         refreshed = await self.repo.get_by_id(comment.id)
         if refreshed is None:
             raise RuntimeError("Comment not found after commit")
+        comments_created_total.inc()
         return refreshed
 
     async def get(self, comment_id: int) -> Comment:

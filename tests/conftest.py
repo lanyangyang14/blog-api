@@ -1,5 +1,6 @@
 """pytest 全局配置（异步）。"""
 
+import os
 from collections.abc import AsyncGenerator
 
 import pytest_asyncio
@@ -15,6 +16,8 @@ import blog_api.models  # noqa: F401
 from blog_api.database import Base, get_db
 from blog_api.main import app
 
+os.environ["APP_ENV"] = "testing"
+os.environ["CELERY_TASK_ALWAYS_EAGER"] = "true"
 # ============ Mock Cache ============
 
 
@@ -110,3 +113,11 @@ async def auth_token(client, sample_user_data):
 @pytest_asyncio.fixture
 async def auth_headers(auth_token):
     return {"Authorization": f"Bearer {auth_token}"}
+
+
+@pytest_asyncio.fixture(autouse=True)
+def mock_celery_tasks(mocker):
+    """Mock Celery 任务，测试时不真发任务。"""
+    mocker.patch("blog_api.tasks.email.send_welcome_email.delay")
+    mocker.patch("blog_api.tasks.notification.notify_new_post.delay")
+    mocker.patch("blog_api.tasks.notification.cleanup_post_data.delay")

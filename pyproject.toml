@@ -26,7 +26,9 @@ dependencies = [
     "redis>=5.0",
     "aiosqlite>=0.20",
     "celery[redis]>=5.4",       # Celery + Redis broker
-    "jinja2>=3.1",              # 邮件模板（可选）
+    "jinja2>=3.1",
+    "prometheus-fastapi-instrumentator>=7.0",
+    "prometheus-client>=0.21",# 邮件模板（可选）
 ]
 
 [project.optional-dependencies]

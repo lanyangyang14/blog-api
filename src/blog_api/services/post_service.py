@@ -6,6 +6,7 @@ from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from blog_api.core.metrics import posts_created_total
 from blog_api.exceptions import ConflictError, ForbiddenError, NotFoundError
 from blog_api.logging_config import get_trace_id
 from blog_api.models import Post, User
@@ -68,6 +69,7 @@ class PostService:
                 author_name=author.username,
             )
         logger.info("文章创建成功: id=%s, title=%s", refreshed.id, refreshed.title)
+        posts_created_total.labels(status=refreshed.status).inc()
         return refreshed
 
     async def get(self, post_id: int) -> Post:

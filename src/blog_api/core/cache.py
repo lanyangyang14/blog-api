@@ -7,6 +7,7 @@ from typing import Any
 import redis.asyncio as redis
 
 from blog_api.config import settings
+from blog_api.core.metrics import cache_hits_total, cache_misses_total
 
 logger = logging.getLogger(__name__)
 
@@ -21,10 +22,13 @@ class Cache:
         )
 
     async def get(self, key: str) -> Any | None:
+        key_prefix = key.split(":")[0]  # 如 "post"
         try:
             value = await self.client.get(key)
             if value is None:
+                cache_misses_total.labels(key_prefix=key_prefix).inc()
                 return None
+            cache_hits_total.labels(key_prefix=key_prefix).inc()
             return json.loads(value)
         except Exception:
             logger.exception("缓存读取失败: %s", key)

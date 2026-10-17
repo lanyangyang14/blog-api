@@ -4,6 +4,7 @@ import logging
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from blog_api.core.metrics import user_registrations_total
 from blog_api.core.security import (
     create_access_token,
     hash_password,
@@ -60,6 +61,7 @@ class AuthService:
             trace_id=get_trace_id(),
         )
         logger.info("用户注册成功: id=%s, username=%s", user.id, user.username)
+        user_registrations_total.inc()  # ← 埋点
         return user
 
     async def authenticate(self, username: str, password: str) -> User:

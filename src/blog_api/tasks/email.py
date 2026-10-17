@@ -1,7 +1,6 @@
 """邮件任务。"""
 
 import logging
-import time
 
 from blog_api.core.celery_app import celery_app
 from blog_api.logging_config import set_trace_id
@@ -12,7 +11,6 @@ logger = logging.getLogger(__name__)
 def _send_email_impl(to: str, subject: str, body: str) -> dict:
     """发邮件的实际实现（同步）。"""
     logger.info("发送邮件: to=%s, subject=%s", to, subject)
-    time.sleep(2)  # 模拟耗时
     logger.info("邮件发送成功: to=%s", to)
     return {"status": "ok", "to": to, "subject": subject}
 

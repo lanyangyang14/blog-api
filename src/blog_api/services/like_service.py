@@ -5,6 +5,7 @@ import logging
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from blog_api.core.cache import cache
+from blog_api.core.metrics import likes_total
 from blog_api.core.rate_limit import check_rate_limit
 from blog_api.exceptions import ConflictError, NotFoundError
 from blog_api.models import User
@@ -34,6 +35,7 @@ class LikeService:
 
         count = await self.repo.count_by_post(post_id)
         logger.info("点赞: user_id=%s, post_id=%s", user.id, post_id)
+        likes_total.labels(action="like").inc()
         return LikeResponse(post_id=post_id, like_count=count, is_liked=True)
 
     async def unlike(self, post_id: int, user: User) -> LikeResponse:
@@ -48,6 +50,7 @@ class LikeService:
         await cache.delete(f"post:{post_id}:like_count")
 
         count = await self.repo.count_by_post(post_id)
+        likes_total.labels(action="unlike").inc()
         return LikeResponse(post_id=post_id, like_count=count, is_liked=False)
 
     async def get_status(self, post_id: int, user: User | None) -> LikeResponse:
